@@ -1,4 +1,4 @@
-print("hello 2")aaa
+print("hello 2")
 hhh
 1
 2

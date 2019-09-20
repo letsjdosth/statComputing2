@@ -22,11 +22,15 @@ class Lognormal_Poisson_RejectionSampler:
         return ((param_lambda**x)*exp(-param_lambda)/factorial(x))
 
     def thres_p_calculator(self, lognorm_sample):
-        thres_p_upper = (self.pois_pmf(x, lognorm_sample) for x in self.data)
-        thres_p_lower = (self.pois_pmf(x, self.data_mean) for x in self.data)
+        thres_p_upper = (self.pois_pmf(x, lognorm_sample) for x in self.data) 
+        thres_p_lower = (self.pois_pmf(x, self.data_mean) for x in self.data) 
         thres_p = 1
         for up, low in zip(thres_p_upper, thres_p_lower):
             thres_p = thres_p * up/low
+            #~수업 note~
+            #이거 underflow 날거 걱정되면
+            #log씌워서 sum으로 계산하고 다시 변환해오자 (나중에 해볼것)
+            #아니면 통째로 알고리즘을 다 log버전으로 돌리자(sampler를 수정. Uniform sample에 log씌우고 rejection rule)
         return thres_p
         
     def sampler(self):

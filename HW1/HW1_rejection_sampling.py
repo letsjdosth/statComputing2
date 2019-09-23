@@ -26,7 +26,7 @@ class Lognormal_Poisson_RejectionSampler:
         thres_p_lower = (self.pois_pmf(x, self.data_mean) for x in self.data) 
         log_thres_p = 0
         for up, low in zip(thres_p_upper, thres_p_lower):
-            log_thres_p = log_thres_p + up - low
+            log_thres_p = log_thres_p + log(up) - log(low)
             #~수업 note~
             #이거 그냥계산하면 잘못하면 underflow 남
             #log씌워서 sum으로 계산하고 다시 변환해오자 (나중에 해볼것)

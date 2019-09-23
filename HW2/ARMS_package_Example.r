@@ -5,7 +5,7 @@ library(armspp)
 
 #ARS(그냥 adaptive rejection sampling) example
 ?arms
-output = arms(5000, function(x)-x^2/2, -1000, 1000, metropolis=FALSE, include_n_evaluation=TRUE)
+output = arms(5000, function(x){-x^2/2}, -1000, 1000, metropolis=FALSE, include_n_evaluation=TRUE)
 hist(output$samples,nclass=100)
 shapiro.test(output$samples)
 

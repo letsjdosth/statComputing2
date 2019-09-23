@@ -19,7 +19,7 @@ class ExponentialSampler:
 
     def get_exponential_sample(self, number_of_smpl):
         result = []
-        for i in range(0, number_of_smpl):
+        for _ in range(0, number_of_smpl):
             result.append(self.exponential_sampler())
         return result
 
@@ -39,7 +39,7 @@ class GammaSampler(ExponentialSampler):
     
     def get_gamma_sample(self, number_of_smpl):
         result = []
-        for i in range(0, number_of_smpl):
+        for _ in range(0, number_of_smpl):
             result.append(self.gamma_sampler())
         return result
 

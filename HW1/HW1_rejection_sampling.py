@@ -51,7 +51,7 @@ class Lognormal_Poisson_RejectionSampler:
     
     def get_sample(self, number_of_smpl):
         result = []
-        for i in range(0, number_of_smpl):
+        for _ in range(0, number_of_smpl):
             result.append(next(self.sampler()))
         return result
 

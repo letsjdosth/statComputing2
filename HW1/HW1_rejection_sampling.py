@@ -21,17 +21,18 @@ class Lognormal_Poisson_RejectionSampler:
             raise ValueError("x should be integer.")
         return ((param_lambda**x)*exp(-param_lambda)/factorial(x))
 
-    def thres_p_calculator(self, lognorm_sample):
+    def log_thres_p_calculator(self, lognorm_sample):
         thres_p_upper = (self.pois_pmf(x, lognorm_sample) for x in self.data) 
         thres_p_lower = (self.pois_pmf(x, self.data_mean) for x in self.data) 
-        thres_p = 1
+        log_thres_p = 0
         for up, low in zip(thres_p_upper, thres_p_lower):
-            thres_p = thres_p * up/low
+            log_thres_p = log_thres_p + up - low
             #~수업 note~
-            #이거 underflow 날거 걱정되면
+            #이거 그냥계산하면 잘못하면 underflow 남
             #log씌워서 sum으로 계산하고 다시 변환해오자 (나중에 해볼것)
             #아니면 통째로 알고리즘을 다 log버전으로 돌리자(sampler를 수정. Uniform sample에 log씌우고 rejection rule)
-        return thres_p
+            #(수정함: rejection rule까지 log버전으로 고침.)
+        return log_thres_p
         
     def sampler(self):
         #get one sample
@@ -39,10 +40,10 @@ class Lognormal_Poisson_RejectionSampler:
             unif_sample = random.uniform(0,1)
             lognorm_sample = exp(random.normalvariate(log(4), 0.5))
             
-            thres_p = self.thres_p_calculator(lognorm_sample)
+            log_thres_p = self.log_thres_p_calculator(lognorm_sample)
 
             # print('p: ', thres_p ," and now uniform r.s : ", unif_sample)
-            if unif_sample < thres_p:
+            if log(unif_sample) < log_thres_p: # log값 이용
                 # print('accepted: ', lognorm_sample)
                 yield lognorm_sample
             else:

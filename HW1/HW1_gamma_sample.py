@@ -32,10 +32,10 @@ class GammaSampler(ExponentialSampler):
     
     def gamma_sampler(self):
         exp_samples = self.get_exponential_sample(self.param_alpha)
-        product = 1
+        sum = 0
         for smpl in exp_samples:
-            product = product * smpl
-        return (-1 * log(product) * self.param_scale)
+            sum += smpl
+        return sum
     
     def get_gamma_sample(self, number_of_smpl):
         result = []
@@ -43,6 +43,24 @@ class GammaSampler(ExponentialSampler):
             result.append(self.gamma_sampler())
         return result
 
+class DirectGammaSampler:
+    def __init__(self, param_alpha, param_beta):
+        if param_alpha%1 != 0:
+            raise ValueError("alpha should be integer")
+        self.param_alpha = param_alpha
+        self.param_beta = param_beta
+    
+    def sampler(self):
+        product = 1
+        for _ in range(self.param_alpha):
+            product *= uniform(0,1)
+        return -self.param_beta*log(product)
+    
+    def get_sample(self, number_of_smpl):
+        result = []
+        for _ in range(0, number_of_smpl):
+            result.append(self.sampler())
+        return result
 
 if __name__ == "__main__":
     print('run as main')
@@ -50,8 +68,14 @@ if __name__ == "__main__":
     # print(EXPsampler.get_exponential_sample(10))
 
     seed(2019-311-252)
-    GAMMAsampler = GammaSampler(2,0.5)
+    GAMMAsampler = GammaSampler(5,1)
     print(GAMMAsampler.get_gamma_sample(10))
 
     plt.hist(GAMMAsampler.get_gamma_sample(100000), bins=100)
+    plt.show()
+
+    
+    GAMMAsampler2 = DirectGammaSampler(5,1)
+    print(GAMMAsampler2.get_sample(10))
+    plt.hist(GAMMAsampler2.get_sample(100000), bins=100)
     plt.show()

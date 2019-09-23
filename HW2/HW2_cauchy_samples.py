@@ -35,5 +35,5 @@ if __name__ == "__main__":
     print(Cauchy_sampler_instance.get_sample(10))
 
     plt.xlim(-20,20)
-    plt.hist(Cauchy_sampler_instance.get_sample(10000), bins=10000)
+    plt.hist(Cauchy_sampler_instance.get_sample(10000), bins=50000)
     plt.show()

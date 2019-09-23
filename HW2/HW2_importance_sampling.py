@@ -1,6 +1,6 @@
 #python 3 file created by Choi, Seokjun
 
-# when X~Laplace(0,1), calcualte E(X^2)
+# when X~Laplace(0,1), calculate E(X^2)
 # using Importance sampling with proposal pdf N(0,2^2)
 
 from math import exp, pi, sqrt

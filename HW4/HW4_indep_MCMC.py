@@ -4,8 +4,6 @@
 #draw posterior samples
 
 #더구현할내용: 1.알아서 initial point 여러개 잡고 수렴점 비교하기
-#밑 클래스를 개조하지말고 그냥 가져다가 initialval만 다르게 여러개 인스턴스 만들어서
-#싹 MCMC 돌리고 mean만 get해서 비교하면될거같음 (모먼트를 더 비교할가???)
 #<<음 만들었는데 좀 병맛인
 
 # 2. acf plot (음 귀찮다)

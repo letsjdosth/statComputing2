@@ -7,14 +7,12 @@ from random import seed, betavariate, normalvariate, gammavariate
 from functools import partial
 import re
 
+import matplotlib.pyplot as plt
 from numpy.random import negative_binomial
 #음 직접 만들까하다가 귀찮아서
 
-#더구현할내용: 1.알아서 initial point 여러개 잡고 수렴점 비교하기
-#밑 클래스를 개조하지말고 그냥 가져다가 initialval만 다르게 여러개 인스턴스 만들어서
-#싹 MCMC 돌리고 mean만 get해서 비교하면될거같음 (모먼트를 더 비교할가???)
-
-# 2. acf plot (음 귀찮다)
+#긴가민가함: 1.알아서 initial point 여러개 잡고 수렴점 비교하기 <<필요한가?
+# 2. acf plot (음 귀찮다 필요한가?)
 #
 
 class GibbsSampler:
@@ -44,6 +42,25 @@ class GibbsSampler:
         self.samples = \
             self.samples[(len(self.samples)-num_samples):len(self.samples)]
 
+    def get_specific_dim_samples(self, dim_idx):
+        if dim_idx >= self.num_dim:
+            raise ValueError("dimension index should be lower than number of dimension. note that index starts at 0")
+        return [smpl[dim_idx] for smpl in self.samples]
+
+    def show_hist(self):
+        grid_column= int(self.num_dim**0.5)
+        grid_row = int(self.num_dim/grid_column)
+        if grid_column*grid_row < self.num_dim:
+            grid_row +=1
+        for i in range(self.num_dim):
+            subplot_idx=str(grid_row)+str(grid_column)+str(i+1)
+            plt.subplot(subplot_idx)
+            dim_samples = self.get_specific_dim_samples(i)
+            plt.ylabel(str(i)+"-th dim")
+            plt.hist(dim_samples, bins=100)
+        plt.show()
+
+    
 
 class FurSealPupCapRecap_FullCondSampler:
     #parameter vector order : 
@@ -140,7 +157,7 @@ if __name__=="__main__":
     Seal_Gibbs = GibbsSampler(Seal_initial_values, Seal_fullcond)
     Seal_Gibbs.generate_samples(10000)
     print(Seal_Gibbs.samples[-5:-1]) #맞나? 물개쨩....90마리밖에없어?
-
+    Seal_Gibbs.show_hist()
 
     #ex5
     teen_birth = []
@@ -162,5 +179,5 @@ if __name__=="__main__":
     Reg_Gibbs = GibbsSampler(Reg_initial_value, Reg_fullcond)
     Reg_Gibbs.generate_samples(30000)
     print(Reg_Gibbs.samples[-5:-1]) #맞나??2
-
+    Reg_Gibbs.show_hist()
     

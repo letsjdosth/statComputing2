@@ -3,9 +3,7 @@
 #using independent Markov chain monte carlo,
 #draw posterior samples
 
-#더구현할내용: 1.알아서 initial point 여러개 잡고 수렴점 비교하기
-#<<음 만들었는데 좀 병맛인
-
+#더구현할내용:
 # 2. acf plot (음 귀찮다)
 
 from math import exp, log, factorial, pi, tan
@@ -17,7 +15,7 @@ import matplotlib.pyplot as plt
 class IndepMcPost:
     def __init__(self, likelihood_pdf, proposal_pdf, proposal_sampler, data):
         self.likelihood_pdf = likelihood_pdf
-        self.proposal_pdf = proposal_pdf
+        self.proposal_pdf = proposal_pdf #이거 일반적인 MCMC 돌릴때 쓸라고 받은건데 당장은 IndepMC라 안씀
         self.proposal_sampler = proposal_sampler
         self.data = data
         self.posterior_sample = []
@@ -79,7 +77,7 @@ class IndepMcPost:
         plt.show()
 
     def show_hist(self):
-        plt.hist(self.posterior_sample, 100)
+        plt.hist(self.posterior_sample, bins=100)
         plt.show()
 
     def get_sample_mean(self, startidx=None):
@@ -90,6 +88,8 @@ class IndepMcPost:
 
     def get_acceptance_rate(self):
         return self.num_accept/self.num_total_iters
+
+
 
 #음 좀맘에안드는데 어떻게해야맘에들지모르겠음
 def MCMC_conv_verifier(initial_val_list, likelihood_pdf, proposal_pdf, proposal_sampler, data):

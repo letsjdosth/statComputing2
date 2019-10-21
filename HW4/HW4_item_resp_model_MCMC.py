@@ -23,7 +23,8 @@ from statistics import mean
 import matplotlib.pyplot as plt
 
 import time
-
+import multiprocessing as mp
+import os
 
 
 
@@ -61,15 +62,20 @@ class MC_MH:
             self.MC_sample.append(last)
             self.num_total_iters += 1
 
-    def generate_samples(self, num_samples, verbose=True):
+    def generate_samples(self, num_samples, pid=None, verbose=True):
         start_time = time.time()
         for i in range(1, num_samples):
             self.sampler()
-            if i%500 == 0 and verbose:
+            if i%500 == 0 and verbose and pid is not None:
+                print("pid:",pid," iteration", i, "/", num_samples)
+            elif i%500 == 0 and verbose and pid is None:
                 print("iteration", i, "/", num_samples)
-        print("iteration", num_samples, "/", num_samples)
+        print()
         elap_time = time.time()-start_time
-        print("done! (elapsed time for execution: ", elap_time//60,"min ", elap_time%60,"sec")
+        if pid is not None:
+            print("pid:",pid, "iteration", num_samples, "/", num_samples, " done! (elapsed time for execution: ", elap_time//60,"min ", elap_time%60,"sec")
+        else:
+            print("iteration", num_samples, "/", num_samples, " done! (elapsed time for execution: ", elap_time//60,"min ", elap_time%60,"sec")
 
 
     def burnin(self, num_burn_in):
@@ -157,35 +163,87 @@ class IRM_McPost(MC_MH): #<-고쳐야함
         if show:
             plt.show()
 
+#################################################################
+
+#for multiprocessing
+def multiproc_1unit_do(result_queue, prop_sd, data, initial,num_iter):
+    func_pid = os.getpid()
+    print("pid: ", func_pid, "start!")
+    UnitMcSampler = IRM_McPost(prop_sd, data, initial)
+    
+    UnitMcSampler.generate_samples(num_iter, func_pid)
+    UnitMcSampler.burnin(num_iter//2)
+    meanvec = UnitMcSampler.get_sample_mean()
+    # result_queue.put(meanvec) #아예 instance자체를 큐에넣으면안되나? 될듯 나중에해보자
+    result_queue.put(UnitMcSampler)
+    print("pid: ", func_pid, "meanvec head ", meanvec[0:5])
+
+
+
 #ex3
-data = []
-with open("c:/gitProject/statComputing2/HW4/drv.txt","r", encoding="utf8") as f:
-    while(True):
-        line = f.readline()
-        split_line = re.findall(r"\w", line)
-        if not split_line:
-            break
-        split_line = [int(elem) for elem in split_line]
-        data.append(split_line)
 
-initial = [0 for _ in range(418+24)] #5 initial이면 10만개는 돌리고 반은 잘라야할듯-_-
-prop_sd = [0.05 for _ in range(418+24)] #0.1정도에서 수렴하는거같음<아님 더작아야할듯
-# print(log_likelihood(initial))
-OurMcSampler = IRM_McPost(prop_sd, data, initial)
-# print(OurMcSampler.proposal_sampler())
+if __name__ == "__main__":
+    data = []
+    with open("c:/gitProject/statComputing2/HW4/drv.txt","r", encoding="utf8") as f:
+        while(True):
+            line = f.readline()
+            split_line = re.findall(r"\w", line)
+            if not split_line:
+                break
+            split_line = [int(elem) for elem in split_line]
+            data.append(split_line)
 
 
-# print(OurMcSampler.IRM_log_target(initial))
-OurMcSampler.generate_samples(50000)
-print("acc rate: ", OurMcSampler.get_acceptance_rate())
-OurMcSampler.show_traceplot(0) #theta1
-OurMcSampler.show_hist(0) #theta1
-OurMcSampler.show_traceplot(417+1) #beta1
-OurMcSampler.show_hist(417+1) #beta1
+    core_num = 4
+    num_iter = 1000 #each MCMC chain's
+    prop_sd = [0.05 for _ in range(418+24)] #0.1정도에서 수렴하는거같음<아님 더작아야할듯
+    
+    proc_vec = []
+    meanvec_queue = mp.Queue()
 
-OurMcSampler.show_traceplot(400) #beta1
-OurMcSampler.show_hist(400) #beta1
+    #initial을 만들고 등록하자
+    for i in range(core_num):
+        unit_initial = [i-1.5 for _ in range(418+24)]
+    
+        unit_proc = mp.Process(target = multiproc_1unit_do, args=(meanvec_queue, prop_sd, data, unit_initial,num_iter))
+        proc_vec.append(unit_proc)
+    
+    
+    for unit_proc in proc_vec:
+        unit_proc.start()
+    
+    mp_result_vec = []
+    for _ in range(core_num):
+        each_result = meanvec_queue.get()
+        print("mp_result_vec_object:", each_result)
+        mp_result_vec.append(each_result)
 
-print("meanvec(after burn-in): ", OurMcSampler.get_sample_mean())
-OurMcSampler.burnin(20000)
-print("meanvec(after burn-in): ", OurMcSampler.get_sample_mean())
+    for unit_proc in proc_vec:
+        unit_proc.join()
+    print("exit.mp")
+
+    #뒤에뭐 히스토그램을 그리던지 traceplot을 그리던지 하셈
+
+    
+    
+    # print(meanvec_queue.get()[:5])
+
+    # # print(log_likelihood(initial))
+    # OurMcSampler = IRM_McPost(prop_sd, data, initial)
+    # # print(OurMcSampler.proposal_sampler())
+
+
+    # # print(OurMcSampler.IRM_log_target(initial))
+    # OurMcSampler.generate_samples(1000)
+    # print("acc rate: ", OurMcSampler.get_acceptance_rate())
+    # OurMcSampler.show_traceplot(0) #theta1
+    # OurMcSampler.show_hist(0) #theta1
+    # OurMcSampler.show_traceplot(417+1) #beta1
+    # OurMcSampler.show_hist(417+1) #beta1
+
+    # OurMcSampler.show_traceplot(400) #beta1
+    # OurMcSampler.show_hist(400) #beta1
+
+    # print("meanvec(after burn-in): ", OurMcSampler.get_sample_mean())
+    # OurMcSampler.burnin(20000)
+    # print("meanvec(after burn-in): ", OurMcSampler.get_sample_mean())

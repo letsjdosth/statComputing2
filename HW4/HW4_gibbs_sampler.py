@@ -2,18 +2,18 @@
 
 #Gibbs sampler
 
+import time
 from math import log
 from random import seed, betavariate, normalvariate, gammavariate
 from functools import partial
+from statistics import mean
 import re
+
 
 import matplotlib.pyplot as plt
 from numpy.random import negative_binomial
-#음 직접 만들까하다가 귀찮아서
+#음 negbin... 직접 만들까하다가 귀찮아서
 
-#긴가민가함: 1.알아서 initial point 여러개 잡고 수렴점 비교하기 <<필요한가?
-# 2. acf plot (음 귀찮다 필요한가?)
-#
 
 class GibbsSampler:
     def __init__(self, initial_val, full_conditional_sampler):
@@ -35,21 +35,33 @@ class GibbsSampler:
         new_sample = tuple(new_sample)
         self.samples.append(new_sample)
     
-    def generate_samples(self, num_samples, num_burn_in=0):
-        n = num_samples + num_burn_in
-        for _ in range(1, n):
+    def generate_samples(self, num_samples):
+        start_time = time.time()
+        for i in range(1, num_samples):
             self.sampler()
-        self.samples = \
-            self.samples[(len(self.samples)-num_samples):len(self.samples)]
+            if i%10000==0:
+                print("iteration", i, "/", num_samples)
+        elap_time = time.time()-start_time
+        print("iteration", num_samples, "/", num_samples, " done! (elapsed time for execution: ", elap_time//60,"min ", elap_time%60,"sec")
+
 
     def get_specific_dim_samples(self, dim_idx):
         if dim_idx >= self.num_dim:
             raise ValueError("dimension index should be lower than number of dimension. note that index starts at 0")
         return [smpl[dim_idx] for smpl in self.samples]
+    
+    def get_sample_mean(self):
+        #burnin자르고 / thining 이후 쓸것
+        mean_vec = []
+        for i in range(self.num_dim):
+            would_cal_mean = self.get_specific_dim_samples(i)
+            mean_vec.append(mean(would_cal_mean))
+        return mean_vec
 
     def show_hist(self):
         grid_column= int(self.num_dim**0.5)
         grid_row = int(self.num_dim/grid_column)
+        plt.figure(figsize=(5*grid_column, 3*grid_row))
         if grid_column*grid_row < self.num_dim:
             grid_row +=1
         for i in range(self.num_dim):
@@ -60,7 +72,42 @@ class GibbsSampler:
             plt.hist(dim_samples, bins=100)
         plt.show()
 
-    
+    def get_autocorr(self, dim_idx, maxLag):
+        y = self.get_specific_dim_samples(dim_idx)
+        acf = []
+        y_mean = mean(y)
+        y = [elem - y_mean  for elem in y]
+        n_var = sum([elem**2 for elem in y])
+        for k in range(maxLag+1):
+            N = len(y)-k
+            n_cov_term = 0
+            for i in range(N):
+                n_cov_term += y[i]*y[i+k]
+            acf.append(n_cov_term / n_var)
+        return acf
+
+    def show_acf(self, maxLag):
+        grid_column= int(self.num_dim**0.5)
+        grid_row = int(self.num_dim/grid_column)
+        if grid_column*grid_row < self.num_dim:
+            grid_row +=1
+        subplot_grid = [i for i in range(maxLag+1)]
+        plt.figure(figsize=(5*grid_column, 3*grid_row))
+        for i in range(self.num_dim):
+            subplot_idx=str(grid_row)+str(grid_column)+str(i+1)
+            plt.subplot(subplot_idx)
+            acf = self.get_autocorr(i, maxLag)
+            plt.ylabel(str(i)+"-th dim")
+            plt.ylim([-1,1])
+            plt.bar(subplot_grid, acf, width=0.3)
+            plt.axhline(0, color="black", linewidth=0.8)
+        plt.show()
+
+    def burnin(self, num_burn_in):
+        self.samples = self.samples[num_burn_in-1:]
+
+    def thinning(self, lag):
+        self.samples = self.samples[::lag]
 
 class FurSealPupCapRecap_FullCondSampler:
     #parameter vector order : 
@@ -147,17 +194,23 @@ class BayesianSimpleReg_FullCondSampler:
 
 
 if __name__=="__main__":
-    #test for neg.bin
-    # negative_binomial(10)
-    
     #ex4
     Seal_fullcond = FurSealPupCapRecap_FullCondSampler()
-    print(len(Seal_fullcond)) #8
+    # print(len(Seal_fullcond)) #8
     Seal_initial_values = (150, 0.1,0.1,0.1,0.1,0.1,0.1,0.1)
     Seal_Gibbs = GibbsSampler(Seal_initial_values, Seal_fullcond)
-    Seal_Gibbs.generate_samples(10000)
-    print(Seal_Gibbs.samples[-5:-1]) #맞나? 물개쨩....90마리밖에없어?
+    Seal_Gibbs.generate_samples(100000)
     Seal_Gibbs.show_hist()
+    Seal_Gibbs.show_acf(5)
+    
+    #음 좀 자르자
+    Seal_Gibbs.burnin(25000)
+    Seal_Gibbs.thinning(2)
+
+    print(Seal_Gibbs.get_sample_mean())
+    Seal_Gibbs.show_hist()
+    Seal_Gibbs.show_acf(5)
+
 
     #ex5
     teen_birth = []
@@ -174,10 +227,19 @@ if __name__=="__main__":
 
 
     Reg_fullcond = BayesianSimpleReg_FullCondSampler(poverty, teen_birth)
-    print(len(Reg_fullcond)) #3
+    # print(len(Reg_fullcond)) #3
     Reg_initial_value = (0,0,1)
     Reg_Gibbs = GibbsSampler(Reg_initial_value, Reg_fullcond)
-    Reg_Gibbs.generate_samples(30000)
-    print(Reg_Gibbs.samples[-5:-1]) #맞나??2
+    Reg_Gibbs.generate_samples(100000)
+    # print(Reg_Gibbs.samples[-5:-1]) #맞나??2
     Reg_Gibbs.show_hist()
+    Reg_Gibbs.show_acf(30)
     
+    #여기도좀자르자-_-
+    Reg_Gibbs.burnin(25000)
+    Reg_Gibbs.thinning(20)
+
+    print(Reg_Gibbs.get_sample_mean())
+    Reg_Gibbs.show_hist()
+    Reg_Gibbs.show_acf(30)
+

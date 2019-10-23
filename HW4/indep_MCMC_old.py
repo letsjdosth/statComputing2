@@ -91,6 +91,28 @@ class IndepMcPost:
 
 
 
+#from HW2,(좀 개조하긴함. __call__부분)
+class CauchySampler:
+    def __init__(self, param_loc, param_scale):
+        if param_scale <= 0:
+            raise ValueError("scale parameter should be >0")
+        self.param_loc = param_loc
+        self.param_scale = param_scale
+
+    def sampler(self):
+        unif_sample = uniform(0,1)
+        return (self.param_scale * tan(pi * (unif_sample - 0.5)) + self.param_loc)
+
+    def get_sample(self, number_of_smpl):
+        result = []
+        for _ in range(0, number_of_smpl):
+            result.append(self.sampler())
+        return result
+    
+    def __call__(self):
+        return self.sampler()
+
+
 #음 좀맘에안드는데 어떻게해야맘에들지모르겠음
 def MCMC_conv_verifier(initial_val_list, likelihood_pdf, proposal_pdf, proposal_sampler, data):
     #for 'so called' standard setting
@@ -158,26 +180,7 @@ if __name__ == "__main__":
     def onlyloc_cauchy_pdf(x, param_loc):
         return cauchy_pdf(x, param_loc, 1)
 
-    #from HW2,(좀 개조하긴함. __call__부분)
-    class CauchySampler:
-        def __init__(self, param_loc, param_scale):
-            if param_scale <= 0:
-                raise ValueError("scale parameter should be >0")
-            self.param_loc = param_loc
-            self.param_scale = param_scale
-
-        def sampler(self):
-            unif_sample = uniform(0,1)
-            return (self.param_scale * tan(pi * (unif_sample - 0.5)) + self.param_loc)
-
-        def get_sample(self, number_of_smpl):
-            result = []
-            for _ in range(0, number_of_smpl):
-                result.append(self.sampler())
-            return result
-        
-        def __call__(self):
-            return self.sampler()
+    
 
     cauchy_sampler = CauchySampler(0,1)
     Norm_Cauchy_model = IndepMcPost(normal_pdf, onlyloc_cauchy_pdf, cauchy_sampler, ex2_data)

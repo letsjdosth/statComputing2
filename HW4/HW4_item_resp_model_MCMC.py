@@ -57,7 +57,7 @@ class IRM_McPost(MC_MH):
         return self.IRM_log_likelihood(param_vec) + self.IRM_log_prior(param_vec)
 
     def __init__(self, proposal_sampler_sd, data, initial):
-        #proposal_sampler_sd : 418+24 dim iterable object
+        #proposal_sampler_sd : 418+24=442 dim iterable object
         super().__init__(log_target_pdf=None, log_proposal_pdf=None, proposal_sampler=None, data=data, initial=initial)
         # self, log_target_pdf, log_proposal_pdf, proposal_sampler, data, initial
         self.num_row = len(data) #n
@@ -165,10 +165,9 @@ def multiproc_1unit_do(result_queue, prop_sd, data, initial,num_iter):
     
     UnitMcSampler.generate_samples(num_iter, func_pid)
     # UnitMcSampler.burnin(num_iter//2)
-    meanvec = UnitMcSampler.get_sample_mean()
     acc_rate = UnitMcSampler.get_acceptance_rate()
     result_queue.put(UnitMcSampler)
-    print("pid: ", func_pid, " acc_rate:",acc_rate," meanvec head ", meanvec[0:5])
+    print("pid: ", func_pid, " acc_rate:",acc_rate)
 
 
 #ex3
@@ -194,7 +193,7 @@ if __name__ == "__main__":
 
     #여기에서 initial을 만들고 process 등록
     for i in range(core_num):
-        unit_initial = [(i-core_num)*3+3*core_num//2 for _ in range(418+24)]
+        unit_initial = [uniform(-10,10) for _ in range(418+24)]
     
         unit_proc = mp.Process(target = multiproc_1unit_do, args=(proc_queue, prop_sd, data, unit_initial,num_iter))
         proc_vec.append(unit_proc)
@@ -214,8 +213,8 @@ if __name__ == "__main__":
     print("exit.mp")
 
     #cheak traceplot
-    # for chain in mp_result_vec:
-    #     chain.show_traceplot(417+1)
+    for chain in mp_result_vec:
+        chain.show_betas_traceplot()
     #음 그냥 맞춰주는 조합이...여기저기있나봄.....
     #아님 분포가 modal이 많거나...(빠져서못나오나?)
 
@@ -227,16 +226,15 @@ if __name__ == "__main__":
     # OurMcSampler.show_hist(0) #theta1
     
 
-    OurMcSampler.show_betas_traceplot()
     OurMcSampler.show_betas_hist()
+    OurMcSampler.show_betas_traceplot()
     OurMcSampler.show_betas_acf(200)
-    print("meanvec(before burn-in): ", OurMcSampler.get_sample_mean())
+    # print("meanvec(before burn-in): ", OurMcSampler.get_sample_mean())
 
     
-    OurMcSampler.burnin(4000)
-    OurMcSampler.thinning(100)
+    OurMcSampler.burnin(10000)
+    OurMcSampler.thinning(200)
     OurMcSampler.show_betas_traceplot()
     OurMcSampler.show_betas_hist()
     OurMcSampler.show_betas_acf(30)
-    print("meanvec(after burn-in): ", OurMcSampler.get_sample_mean())
-    
+    print("mean vec(after burn-in): ", OurMcSampler.get_sample_mean())

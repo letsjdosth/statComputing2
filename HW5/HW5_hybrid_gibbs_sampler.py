@@ -4,11 +4,9 @@
 
 import time
 from math import log, gamma
-from random import seed, betavariate, normalvariate, gammavariate, expovariate
+from random import seed, betavariate, expovariate
 from functools import partial
 from statistics import mean
-import re
-
 
 import matplotlib.pyplot as plt
 from numpy.random import negative_binomial
@@ -20,31 +18,31 @@ from HW5_MC_Core import MC_MH
 class Seal_MC_MH_onlylast2dim(MC_MH):
     # MH로 돌릴 parameter를 위한 MH class
     #parameter vector order : 
+    #    [data              ][param0 1    ] for hyperprior's view
     # 0  1  2  3  4  5  6  7  8      9
     # N  a1 a2 a3 a4 a5 a6 a7 theta1 theta2
+ 
 
     def seal_proposal_sampler(self, last):
         #do not depend on last : indep mcmc
         proposed_thetas = [expovariate(1000) for i in range(2)]
         #문제: theta1>0 theta2>0이어야함 - > exp쓰자(이유:posterior에 gamma - exp kernel꼴이 뒤에 곱해져있음))
-        last[-2:]=proposed_thetas
-        return last
+        return proposed_thetas
 
     def seal_log_proposal_pdf(self, from_smpl, to_smpl):
         #do not depend on from_smpl
-        #exp쓰면 target(posterior)에서도 같이 없애버리고 proposal pdf를 구현안 해도 되나, 코드 직관성을 위해 일단 뒀음
-        to_thetas = to_smpl[-2:]
-        logval = -sum(to_thetas)/1000 #여기가 exp(상쇄 부분)
+        #exp쓰면 target(posterior)에서도 같이 없애버리고 proposal pdf를 구현 안 해도 되나, 코드 직관성을 위해 일단 뒀음
+        logval = 0
+        # logval = -sum(to_smpl)/1000 #여기가 exp(상쇄 부분)
         return logval
 
     def seal_log_target_pdf(self, param_vec):
-        #exp쓰면 target(posterior)에서도 해당 term을 없애버리고 proposal pdf를 구현안 해도 되나, 코드 직관성을 위해  일단 뒀음
-        alphas = param_vec[1:8]
-        thetas = param_vec[8:10]
+        #exp쓰면 target(posterior)에서도 해당 term을 없애버리고 proposal pdf를 구현 안 해도 되나, 코드 직관성을 위해  일단 뒀음
+        thetas = param_vec
         logval = 7*log(gamma(thetas[0]+thetas[1]) / (gamma(thetas[0])+gamma(thetas[1])))
-        for alpha in alphas:
+        for alpha in self.data:
             logval += (thetas[0]*log(alpha) + thetas[1]*log(1-alpha))
-            logval -= (thetas[0]+thetas[1])/1000 #여기가 exp (상쇄 부분)
+            # logval -= (thetas[0]+thetas[1])/1000 #여기가 exp (상쇄 부분)
         return logval
 
     def __init__(self, data, initial):
@@ -60,8 +58,8 @@ class Seal_MC_MH_onlylast2dim(MC_MH):
         theta1 = []
         theta2 = []
         for smpl in self.MC_sample:
-            theta1.append(smpl[8])
-            theta2.append(smpl[9])
+            theta1.append(smpl[0])
+            theta2.append(smpl[1])
         return (mean(theta1), mean(theta2))
 
 
@@ -95,8 +93,16 @@ class Seal_HybridGibbsSampler:
             self.up_to_date[dim_idx] = new_val
         
         # hybrid part using MH
-        MH_object = Seal_MC_MH_onlylast2dim(None, self.up_to_date) #이걸 외부에서 받게만들어야할까? (나중에고치자)
-        MH_object.generate_samples(num_MCiter, verbose=False)
+        MH_object = Seal_MC_MH_onlylast2dim(data=self.up_to_date[1:8], initial=self.up_to_date[8:10]) 
+        #이걸 외부에서 받게만들어야할까? (나중에고치자)
+        
+        #pi(theta1,theta2)는 hyperprior이고 alpha가 거기서 뽑혀나오므로
+        # alpha를 (실제 전체모델상에서 data는 아니지만 MH부분상에서는 data 역할임) data자리에 집어넣자
+        #(코딩방식을 여러가지로 할 수 있는데... 
+        # param_vec을 떼는 작업을 어느 위치에서 처리하냐의 차이임
+        # 다 파라메터로보고 data를 None을 넘긴다음 MC sampler에서 처리하느냐 아니면 그냥 위처럼 넘기느냐..
+        
+        MH_object.generate_samples(num_MCiter, verbose=False) #True로 두고 Mcmc 도는걸 구경할수있다(콘솔에 찍느냐 느려지므로 비추천)
         MH_object.burnin(num_MCiter//2) #일괄적으로 절반 자른다
         new_thetas = MH_object.get_thetas_mean()
         new_sample[-2:] = new_thetas
@@ -210,18 +216,20 @@ class FurSealPupCapRecap_FullCondSampler_with_thetas:
 
 
 if __name__=="__main__":
-    #ex4
+    
+    seed(2019-311252)
+    #ex1
     Seal_fullcond = FurSealPupCapRecap_FullCondSampler_with_thetas()
     # print(len(Seal_fullcond)) #8
     Seal_initial_values = (150, 0.1,0.1,0.1,0.1,0.1,0.1,0.1, 0.5, 0.5)
     Seal_Gibbs = Seal_HybridGibbsSampler(Seal_initial_values, Seal_fullcond)
-    Seal_Gibbs.generate_samples(1000, num_MCiter=10000) #보고서쓸땐 좀 많이돌리자
+    Seal_Gibbs.generate_samples(5000, num_MCiter=30000) #보고서쓸땐 좀 많이돌리자
     Seal_Gibbs.show_hist()
     Seal_Gibbs.show_acf(5)
-    print(Seal_Gibbs.get_sample_mean())
+    # print(Seal_Gibbs.get_sample_mean())
     
     #자르자
-    Seal_Gibbs.burnin(500)
+    Seal_Gibbs.burnin(1000)
     Seal_Gibbs.thinning(2)
 
     print(Seal_Gibbs.get_sample_mean())

@@ -110,7 +110,7 @@ class Seal_HybridGibbsSampler:
 
         new_sample = tuple(new_sample)
         self.samples.append(new_sample)
-    
+
     def generate_samples(self, num_samples, num_MCiter=10000):
         start_time = time.time()
         for i in range(1, num_samples):

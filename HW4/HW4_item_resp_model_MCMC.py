@@ -49,9 +49,14 @@ class IRM_McPost(MC_MH):
         return log_likelihood_val
     
     def IRM_log_prior(self, param_vec):
-        #When we calculate log_r(MH ratio's log value), just canceled.
+        #When we calculate log_r(MH ratio's log value), just canceled. 
         #so we do not need implement this term.
-        return 0
+        # 제출 후 수정
+        #<-선희씨: 아닌거같음 # proposal은 나눠져도, prior가 나눠지진 않는듯...
+        log_prior_val = 0
+        for param in param_vec:
+            log_prior_val += param**2/200 #앞 상수 날리고
+        return log_prior_val
 
     def IRM_log_target(self, param_vec):
         return self.IRM_log_likelihood(param_vec) + self.IRM_log_prior(param_vec)

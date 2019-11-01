@@ -163,7 +163,7 @@ class IRM_McPost(MC_MH):
 #################################################################
 
 #for multiprocessing
-def multiproc_1unit_do(result_queue, prop_sd, data, initial,num_iter):
+def multiproc_1unit_do(result_queue, prop_sd, data, initial, num_iter):
     func_pid = os.getpid()
     print("pid: ", func_pid, "start!")
     UnitMcSampler = IRM_McPost(prop_sd, data, initial)
@@ -220,8 +220,7 @@ if __name__ == "__main__":
     #cheak traceplot
     for chain in mp_result_vec:
         chain.show_betas_traceplot()
-    #음 그냥 맞춰주는 조합이...여기저기있나봄.....
-    #아님 분포가 modal이 많거나...(빠져서못나오나?)
+
 
     
     ##########################
@@ -237,7 +236,7 @@ if __name__ == "__main__":
     # print("meanvec(before burn-in): ", OurMcSampler.get_sample_mean())
 
     
-    OurMcSampler.burnin(10000)
+    OurMcSampler.burnin(20000)
     OurMcSampler.thinning(200)
     OurMcSampler.show_betas_traceplot()
     OurMcSampler.show_betas_hist()

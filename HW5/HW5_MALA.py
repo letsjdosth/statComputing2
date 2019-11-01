@@ -171,7 +171,9 @@ if __name__ == "__main__":
 
     for _ in range(core_num):
         unit_initial = uniform(-100,100) #random으로 뽑자
-        unit_sigma_square = 0.01 #그냥 일괄 설정
+        unit_sigma_square = 0.03 #그냥 일괄 설정  0.01~0.03
+        #feedback: 너무 작으면, 수렴되고 나서 거의 움직이질 못하게 됨
+        
         
         unit_proc = mp.Process(target = multiproc_1unit_do_MALA, args=(proc_queue, unit_sigma_square, data, unit_initial, num_iter))
         proc_vec.append(unit_proc)

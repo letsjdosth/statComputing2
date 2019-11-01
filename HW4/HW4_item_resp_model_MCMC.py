@@ -55,7 +55,7 @@ class IRM_McPost(MC_MH):
         #<-선희씨: 아닌거같음 # proposal은 나눠져도, prior가 나눠지진 않는듯...
         log_prior_val = 0
         for param in param_vec:
-            log_prior_val += param**2/200 #앞 상수 날리고
+            log_prior_val += param**2/200 #앞 상수 -0.5log(2pi)-log10 날리고 (여긴 r계산시 canceled)
         return log_prior_val
 
     def IRM_log_target(self, param_vec):

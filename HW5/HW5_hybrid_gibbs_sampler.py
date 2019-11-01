@@ -31,13 +31,15 @@ class Seal_MC_MH_onlylast2dim(MC_MH):
 
     def seal_log_proposal_pdf(self, from_smpl, to_smpl):
         #do not depend on from_smpl
-        #exp쓰면 target(posterior)에서도 같이 없애버리고 proposal pdf를 구현 안 해도 되나, 코드 직관성을 위해 일단 뒀음
+        # exp를 쓰면 target(posterior)에서도 같이 없애버리고 proposal pdf를 구현 안 해도 되나,
+        # 코드 직관성을 위해 일단 주석으로 뒀음
         logval = 0
         # logval = -sum(to_smpl)/1000 #여기가 exp(상쇄 부분)
         return logval
 
     def seal_log_target_pdf(self, param_vec):
-        #exp쓰면 target(posterior)에서도 해당 term을 없애버리고 proposal pdf를 구현 안 해도 되나, 코드 직관성을 위해  일단 뒀음
+        # exp를 쓰면 target(posterior)에서도 해당 term을 없애버리고 proposal pdf를 구현 안 해도 되나, 
+        # 코드 직관성을 위해 일단 주석으로 뒀음
         thetas = param_vec
         logval = 7*log(gamma(thetas[0]+thetas[1]) / (gamma(thetas[0])+gamma(thetas[1])))
         for alpha in self.data:

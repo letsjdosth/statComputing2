@@ -12,11 +12,14 @@
 
 from math import log, exp, pi
 from random import uniform, normalvariate, seed
+from statistics import mean
 import time
 import multiprocessing as mp
 import os
 
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
+
 
 class MC_Hamiltonian:
     def __init__(self, log_target_pdf, log_target_grad, leapfrog_step_num, step_size, initial):
@@ -132,8 +135,28 @@ class MC_Hamiltonian_withUtil_2dim(MC_Hamiltonian):
             acc_rate = 0
         return acc_rate
 
+    def get_autocorr(self, dim_idx, maxLag):
+        y = self.get_specific_dim_samples(dim_idx)
+        acf = []
+        y_mean = mean(y)
+        y = [elem - y_mean  for elem in y]
+        n_var = sum([elem**2 for elem in y])
+        for k in range(maxLag+1):
+            N = len(y)-k
+            n_cov_term = 0
+            for i in range(N):
+                n_cov_term += y[i]*y[i+k]
+            acf.append(n_cov_term / n_var)
+        return acf
 
-
+    def show_acf(self, dim_idx, maxLag, show=True):
+        grid = [i for i in range(maxLag+1)]
+        acf = self.get_autocorr(dim_idx, maxLag)
+        plt.ylim([-1,1])
+        plt.bar(grid, acf, width=0.3)
+        plt.axhline(0, color="black", linewidth=0.8)
+        if show:
+            plt.show()
 
 
 #our case
@@ -202,15 +225,21 @@ if __name__ == "__main__":
     seed(2019-311-252)
     
     core_num = 8 #띄울 process 수
-    testmode = 6
+    testmode = 0
     #testmode setting
+    #0. debug mode
     #1. epsilon varying
     #2. leapfrog step L varying
     #3. set initial point randomly around 0 (high var)
     #4. set initial point randomly around -8,-6 
     #5. set initial point randomly around 8,6
     #6. set initial point randomly around -1,-1, keep epsilon/L ratio same
-    
+    if testmode==0:
+        each_num_iter = 20000
+        each_leapfrog_step_num = [4 for _ in range(8)]
+        each_step_size = [0.01, 0.05, 0.1, 0.2, 0.3, 0.5, 0.7, 1]
+        each_initial = [(0,0) for _ in range(8)]
+
     if testmode==1:
         each_num_iter = 200000
         each_leapfrog_step_num = [4 for _ in range(8)]
@@ -272,11 +301,11 @@ if __name__ == "__main__":
 
 
     #cheak traceplot
-    grid_column= 4
+    grid_column= 8
     grid_row = 4
-    plt.figure(figsize=(3*grid_column, 5*grid_row))
+    plt.figure(figsize=(5*grid_column, 3*grid_row))
     for i, chain in enumerate(mp_result_vec):
-        plt.subplot(grid_row, grid_column, 2*i+1)
+        plt.subplot(grid_row, grid_column, 4*i+1)
         plt.subplots_adjust(hspace=0.6)
         setting_contourplot(-12,12)
         chain.show_scatterplot(show=False)
@@ -285,9 +314,13 @@ if __name__ == "__main__":
             + "\ninitial: " + str(round(chain.MC_sample[0][0],4)) + ", " + str(round(chain.MC_sample[0][1],4))
         plt.title(title_str)
         
-        plt.subplot(grid_row, grid_column, 2*i+2)
+        plt.subplot(grid_row, grid_column, 4*i+2)
         title_str = "total iter num:" + str(chain.HMCiter) \
             + "\nacceptance rate:" + str(round(chain.get_accept_rate(),5))
         plt.title(title_str)
         chain.show_momentum(show=False)
+        plt.subplot(grid_row, grid_column, 4*i+3)
+        chain.show_acf(0,10,show=False)
+        plt.subplot(grid_row, grid_column, 4*i+4)
+        chain.show_acf(1,10,show=False)
     plt.show()

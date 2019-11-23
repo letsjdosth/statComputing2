@@ -4,7 +4,6 @@
 #get standard normal samples.
 
 #더 할일:
-# 1. acf plot
 # 2. 아예 이상한 점에서 시작하기 (음 underflow 날 듯)
 # 3. log(0)에 가까운경우 
 # underflow 잡고 끊지말고 그냥그거 reject한담에 또 시도하도록? (<이거 conv.prop을 흔들수도 있을것같음)

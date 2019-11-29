@@ -224,9 +224,9 @@ if __name__ == "__main__":
     seed(2019-311-252)
     
     core_num = 8 #띄울 process 수
-    testmode = 0
+    testmode = 5
     #testmode setting
-    #0. debug mode
+    #0. picture output debug mode
     #1. epsilon varying
     #2. leapfrog step L varying
     #3. set initial point randomly around 0 (high var)

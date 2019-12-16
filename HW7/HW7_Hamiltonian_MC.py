@@ -240,7 +240,7 @@ if __name__ == "__main__":
     seed(2019-311-252)
     
     core_num = 8 #띄울 process 수
-    mode = 3 #돌릴 chain setting mode 선택
+    mode = 5 #돌릴 chain setting mode 선택
     #mode setting
     #0. prof. Jin's setting (on c code)
     #1. changing epsilon 

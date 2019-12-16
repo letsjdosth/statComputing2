@@ -240,21 +240,12 @@ if __name__ == "__main__":
     seed(2019-311-252)
     
     core_num = 8 #띄울 process 수
-<<<<<<< HEAD
-    testmode = 5
-    #testmode setting
-    #0. picture output debug mode
-    #1. epsilon varying
-    #2. leapfrog step L varying
-    #3. set initial point randomly around 0 (high var)
-=======
-    mode = 5 #돌릴 chain setting mode 선택
+    mode = 3 #돌릴 chain setting mode 선택
     #mode setting
     #0. prof. Jin's setting (on c code)
     #1. changing epsilon 
     #2. changing leapfrog step L 
     #3. set initial point randomly around 0
->>>>>>> 38350ce1518136d005520c2989456966593da686
     #4. set initial point randomly around -8,-6 
     #5. set initial point randomly around 8,6
     

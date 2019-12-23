@@ -45,7 +45,7 @@ class MC_StochasticApproximation:
 
     @abstractmethod    
     def proposal_sampler(self, last):
-        # 차원에 맞게 multivariate normal d개 생선한 tuple 리턴
+        # 차원에 맞게 multivariate normal d개 생성한 tuple 리턴
         # return normalvariate(last, self.proposal_sigma)
         pass
     
